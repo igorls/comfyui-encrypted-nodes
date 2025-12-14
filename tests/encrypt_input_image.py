@@ -13,7 +13,7 @@ import os
 import argparse
 
 # Add parent directory for crypto import
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from crypto import generate_keypair, encrypt_to_base64
 

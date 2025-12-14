@@ -3,14 +3,14 @@
 Test script for encrypted nodes crypto module.
 
 Run from the comfyui-encrypted-nodes directory:
-    python test_crypto.py
+    python3 tests/test_crypto.py
 """
 
 import sys
 import os
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add repo root (one directory above tests/) to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from crypto import (
     generate_keypair,

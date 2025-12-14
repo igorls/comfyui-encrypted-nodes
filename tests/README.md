@@ -13,13 +13,13 @@ Test files and utilities for the encrypted nodes package.
 
 ```bash
 # Run crypto tests
-python3 test_crypto.py
+python3 tests/test_crypto.py
 
 # Encrypt an image for EncryptedLoadImage node
-python3 encrypt_input_image.py ../path/to/image.png --generate-keys
+python3 tests/encrypt_input_image.py /path/to/image.png --generate-keys
 
 # Decrypt an output image
-python3 decrypt_output_image.py /path/to/encrypted.enc
+python3 tests/decrypt_output_image.py /path/to/encrypted.enc
 ```
 
 ## Key Files

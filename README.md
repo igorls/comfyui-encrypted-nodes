@@ -19,12 +19,21 @@ Mount as a custom node in ComfyUI:
 -v /path/to/comfyui-encrypted-nodes:/opt/ComfyUI/custom_nodes/comfyui-encrypted-nodes
 ```
 
+Or clone directly into ComfyUI:
+
+```bash
+cd /path/to/ComfyUI/custom_nodes
+git clone https://github.com/igorls/comfyui-encrypted-nodes.git comfyui-encrypted-nodes
+```
+
 ## Key Generation
 
 ### X25519 (Recommended for cloud deployment)
 
 ```python
-from comfyui_encrypted_nodes.crypto import generate_x25519_keypair
+"""Run this from the repo root (the same folder as crypto.py)."""
+
+from crypto import generate_x25519_keypair
 
 private_key, public_key = generate_x25519_keypair()
 # private_key: 64 hex chars (fits in env var!)
@@ -40,7 +49,9 @@ BACKEND_PUBLIC_KEY=aa21dcad2dbefdfc9b8e1c73ee178299bb11dd6f4329fe36b2959deb019d4
 ### RSA-4096 (Legacy, larger keys)
 
 ```python
-from comfyui_encrypted_nodes.crypto import generate_keypair
+"""Run this from the repo root (the same folder as crypto.py)."""
+
+from crypto import generate_keypair
 
 private_key, public_key = generate_keypair()
 # Store private_key in CONTAINER_PRIVATE_KEY_FILE
