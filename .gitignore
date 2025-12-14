@@ -1,0 +1,7 @@
+# Test artifacts
+*.pem
+encrypted_*.txt
+
+# Python cache
+__pycache__/
+*.pyc
