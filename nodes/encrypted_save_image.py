@@ -82,7 +82,9 @@ class EncryptedSaveImage:
             
             # Convert to PNG bytes in memory
             buffer = io.BytesIO()
-            pil_image.save(buffer, format='PNG')
+            # Strip metadata to prevent workflow leakage
+            pil_image.info = {}
+            pil_image.save(buffer, format='PNG', pnginfo=None)
             image_bytes = buffer.getvalue()
             
             # Encrypt the image
