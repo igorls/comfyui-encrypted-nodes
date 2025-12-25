@@ -42,6 +42,8 @@ class EncryptedSaveImage:
             },
             "optional": {
                 "save_to_disk": ("BOOLEAN", {"default": False}),
+                "image_format": (["JPEG", "PNG"], {"default": "JPEG"}),
+                "jpeg_quality": ("INT", {"default": 92, "min": 50, "max": 100, "step": 1}),
             }
         }
     
@@ -50,7 +52,7 @@ class EncryptedSaveImage:
     OUTPUT_NODE = True
     CATEGORY = "image/encrypted"
     
-    def save_encrypted(self, images, public_key_pem: str, filename_prefix: str, save_to_disk: bool = False):
+    def save_encrypted(self, images, public_key_pem: str, filename_prefix: str, save_to_disk: bool = False, image_format: str = "JPEG", jpeg_quality: int = 92):
         """
         Encrypt and save/transmit images.
         
@@ -59,6 +61,8 @@ class EncryptedSaveImage:
             public_key_pem: Backend's RSA public key (PEM format)
             filename_prefix: Prefix for saved files (if save_to_disk=True)
             save_to_disk: Whether to save .enc files to output directory
+            image_format: Output format - "JPEG" (smaller, lossy) or "PNG" (lossless)
+            jpeg_quality: JPEG quality (50-100), higher = better quality but larger
         
         Returns:
             UI dict with encrypted base64 data for WebSocket transmission
@@ -86,16 +90,28 @@ class EncryptedSaveImage:
             pil_image = Image.fromarray(img_array)
             timings['to_pil_ms'] = (time.perf_counter() - t0) * 1000
             
-            # Convert to PNG bytes in memory
+            # Encode image to bytes
             t1 = time.perf_counter()
             buffer = io.BytesIO()
             # Strip metadata to prevent workflow leakage
             pil_image.info = {}
-            # OPTIMIZATION: Use compress_level=1 for fast encoding (default is 9)
-            pil_image.save(buffer, format='PNG', pnginfo=None, compress_level=1)
+            
+            if image_format == "JPEG":
+                # JPEG: Smaller files, ideal for network transmission
+                # Convert RGBA to RGB if needed (JPEG doesn't support alpha)
+                if pil_image.mode == 'RGBA':
+                    pil_image = pil_image.convert('RGB')
+                pil_image.save(buffer, format='JPEG', quality=jpeg_quality, optimize=False)
+                encode_key = 'jpeg_encode_ms'
+            else:
+                # PNG: Lossless, larger files
+                # OPTIMIZATION: Use compress_level=1 for fast encoding (default is 9)
+                pil_image.save(buffer, format='PNG', pnginfo=None, compress_level=1)
+                encode_key = 'png_encode_ms'
+            
             image_bytes = buffer.getvalue()
-            timings['png_encode_ms'] = (time.perf_counter() - t1) * 1000
-            timings['png_size_kb'] = len(image_bytes) / 1024
+            timings[encode_key] = (time.perf_counter() - t1) * 1000
+            timings['image_size_kb'] = len(image_bytes) / 1024
             
             # Encrypt the image
             t2 = time.perf_counter()
@@ -104,7 +120,7 @@ class EncryptedSaveImage:
             timings['encrypted_size_kb'] = len(encrypted_base64) / 1024
             
             total_ms = (time.perf_counter() - t0) * 1000
-            print(f"[EncryptedSaveImage] idx={idx} total={total_ms:.1f}ms timings={timings}")
+            print(f"[EncryptedSaveImage] idx={idx} format={image_format} total={total_ms:.1f}ms timings={timings}")
             
             # Save to disk if requested
             saved_path = None
