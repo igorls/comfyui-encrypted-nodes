@@ -63,6 +63,8 @@ class EncryptedSaveImage:
         Returns:
             UI dict with encrypted base64 data for WebSocket transmission
         """
+        import time
+        
         # Fall back to environment variable if no key provided
         if not public_key_pem.strip():
             public_key_pem = get_public_key_from_env()
@@ -75,20 +77,34 @@ class EncryptedSaveImage:
         results = []
         
         for idx, image in enumerate(images):
+            timings = {}
+            t0 = time.perf_counter()
+            
             # Convert tensor to PIL Image
             # Image tensor is [H, W, C] with values 0-1
             img_array = (image.cpu().numpy() * 255).astype(np.uint8)
             pil_image = Image.fromarray(img_array)
+            timings['to_pil_ms'] = (time.perf_counter() - t0) * 1000
             
             # Convert to PNG bytes in memory
+            t1 = time.perf_counter()
             buffer = io.BytesIO()
             # Strip metadata to prevent workflow leakage
             pil_image.info = {}
-            pil_image.save(buffer, format='PNG', pnginfo=None)
+            # OPTIMIZATION: Use compress_level=1 for fast encoding (default is 9)
+            pil_image.save(buffer, format='PNG', pnginfo=None, compress_level=1)
             image_bytes = buffer.getvalue()
+            timings['png_encode_ms'] = (time.perf_counter() - t1) * 1000
+            timings['png_size_kb'] = len(image_bytes) / 1024
             
             # Encrypt the image
+            t2 = time.perf_counter()
             encrypted_base64 = encrypt_to_base64(image_bytes, public_key_pem)
+            timings['encrypt_ms'] = (time.perf_counter() - t2) * 1000
+            timings['encrypted_size_kb'] = len(encrypted_base64) / 1024
+            
+            total_ms = (time.perf_counter() - t0) * 1000
+            print(f"[EncryptedSaveImage] idx={idx} total={total_ms:.1f}ms timings={timings}")
             
             # Save to disk if requested
             saved_path = None
