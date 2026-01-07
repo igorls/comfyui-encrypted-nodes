@@ -29,15 +29,10 @@ class EncryptedLoadImageFromFile:
     
     @classmethod
     def INPUT_TYPES(cls):
-        # Get list of files in input directory for dropdown
-        input_dir = folder_paths.get_input_directory()
-        files = []
-        if os.path.exists(input_dir):
-            files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
-        
+        # Use STRING type to accept any filename (compatible with attachImage pattern)
         return {
             "required": {
-                "image": (sorted(files) if files else ["placeholder.enc"], {"default": "placeholder.enc"}),
+                "image": ("STRING", {"default": "encrypted_input.enc"}),
             },
         }
     
